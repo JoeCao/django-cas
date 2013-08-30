@@ -75,6 +75,36 @@ def _verify_cas2(ticket, service):
     else:
         return None, tree
 
+def _verify_cas3(ticket, service):
+    """Verifies CAS 3.0+ XML-based authentication ticket and returns extended attributes.
+
+    Returns username on success and None on failure.
+    """
+
+    try:
+        from xml.etree import ElementTree
+    except ImportError:
+        from elementtree import ElementTree
+
+    params = {'ticket': ticket, 'service': service}
+    url = (urljoin(settings.CAS_SERVER_URL, 'proxyValidate') + '?' +
+           urlencode(params))
+    page = urlopen(url)
+    try:
+        user = None
+        attributes = {}
+        response = page.read()
+        tree = ElementTree.fromstring(response)
+        if tree[0].tag.endswith('authenticationSuccess'):
+            for element in tree[0]:
+               if element.tag.endswith('user'):
+                    user = element.text
+               elif element.tag.endswith('attributes'):
+                    for attribute in element:
+                        attributes[attribute.tag.split("}").pop()] = attribute.text
+        return user, attributes
+    finally:
+        page.close()
 
 def verify_proxy_ticket(ticket, service):
     """Verifies CAS 2.0+ XML-based proxy ticket.
@@ -110,7 +140,7 @@ def verify_proxy_ticket(ticket, service):
         page.close()
     
 
-_PROTOCOLS = {'1': _verify_cas1, '2': _verify_cas2}
+_PROTOCOLS = {'1': _verify_cas1, '2': _verify_cas2, '3': _verify_cas3, 'CAS_2_SAML_1_0': _verify_cas2_saml}
 
 if settings.CAS_VERSION not in _PROTOCOLS:
     raise ValueError('Unsupported CAS_VERSION %r' % settings.CAS_VERSION)
