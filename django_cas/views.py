@@ -14,7 +14,7 @@ def _service_url(request, redirect_to=None):
     """Generates application service URL for CAS"""
 
     protocol = ('http://', 'https://')[request.is_secure()]
-    host = get_host(request)
+    host = request.get_host()
     service = protocol + host + request.path
     if redirect_to:
         if '?' in service:
