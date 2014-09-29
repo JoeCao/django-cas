@@ -3,7 +3,7 @@
 from urllib import urlencode
 from urlparse import urljoin
 
-from django.http import get_host, HttpResponseRedirect, HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib import messages
